@@ -22,10 +22,27 @@ This register is the Phase 1 completion checklist. It describes the domain surfa
 | Standards and adapters | Adapter boundary/mode, standard reference/version/edition, profile subset/revision, canonical mappings, declared capability, exchange evidence and conformance result | Independent per-component selection for virtual/replay/shadow/live; unsupported fields are preserved or explicitly rejected |
 | Replay and provenance | Input snapshot, scenario fingerprint, clock, seed, PRNG/simulator/profile versions, source payload digest, exchanges and outputs | Identical pinned inputs reproduce normalized events and decisions; replay records identify every profile used |
 
+## Canonical ontology anchors
+
+These are the primary OWL anchors for the coverage rows above. Datatype properties use explicit quantity-kind, unit/direction, time, quality, provenance, and lifecycle terms where relevant.
+
+| Surface | Primary ontology terms |
+| --- | --- |
+| Topology and assets | `Site`, `EnergyAsset`, `GridConnection`, `GridMeter`, `PVArray`, `Inverter`, `StationaryBattery`, `BuildingLoad`, `ControllableLoad`, `EVSE`, `Connector`, `Vehicle`, `ChargingSession`, `Sensor`, `SpatialLocation` |
+| Inputs and forecasts | `Observation`, `WeatherObservation`, `WeatherForecast`, `EnergyObservation`, `PVObservation`, `BuildingLoadObservation`, `GridObservation`, `BatteryObservation`, `EVSEObservation`, `PriceInterval`, `ExternalSignal`, `OpenADRSignal`, `GridConstraintSignal` |
+| Requirements and limits | `OperatingConstraint`, `PowerLimit`, `EnergyTarget`, `DepartureDeadline`, `ComfortConstraint`, `CustomerServiceRequirement`, `ConsentPolicy`, `AvailabilityWindow`, `SiteProtectionState`, `CapabilityDeclaration`, `OperatingSchedule` |
+| EMS outputs | `EventAssessment`, `FlexibilityAssessment`, `FlexibilityResponse`, `StrategyRecommendation`, `EMSPlan`, `PowerAllocation`, `AssetDispatch`, `ServiceOutcome` |
+| Control and observed result | `CommandIntent`, `CommandLifecycleEvent`, `CommandAcknowledgement`, `ChargerFeedback`, `OperationalStateEvent`, `FaultEvent`, `MeterReading`, `Reconciliation` |
+| Interoperability evidence | `BoundaryAdapter`, `VirtualAdapter`, `LiveAdapter`, `AdapterProfile`, `StandardReference`, `ProtocolExchange`, `ConformanceScenario`, `ConformanceResult`, `SimulationRun` |
+
+The principal property groups include stable/source/correlation identifiers; issue, event, valid, observed, recorded and acknowledged times; numeric values and UCUM units; grid direction; specific weather, grid, PV, building, battery and EVSE quantities; service target/SOC/departure fields; capability, availability, fault and command lifecycle state; planned/acknowledged/measured power and delivered energy; and adapter standard/profile/run evidence.
+
 ## Gate evidence
 
 For each row, the review records links to ontology terms, SHACL shapes, fixture paths and CI checks. “Not applicable” requires a reason and an explicit site profile assumption. Passing RDF/SHACL parsing alone does not pass this register. The Phase 1 gate is complete only when the whole register has evidence and reviewers sign off on unresolved provider-specific mappings.
 
-## Current draft evidence
+## Current model evidence
 
-The current vocabulary has the principal asset, observation, weather/forecast, constraint, session, assessment, plan, command, acknowledgement, feedback, reconciliation, profile, standard, protocol exchange and deterministic-run concepts. The closed-loop example demonstrates representative weather/PV/building-load inputs and a versioned virtual OCPP boundary. This is starter evidence only: all rows still require full shape coverage, distinct positive/negative fixtures and acceptance scenarios before Phase 1 can pass.
+Ontology v0.2 gives every current canonical input/output surface a named OWL term and has SHACL checks for weather and forecast semantics, prices, grid/site topology, physical ranges, service constraints, EVSE capability, command support, acknowledgement correlation, meter intervals, faults, reconciliation, standard/profile metadata and deterministic runs. The combined fixture covers weather, PV, building/load control, prices, grid, storage, vehicle/session, EVSE, a versioned virtual OCPP adapter, protocol exchange, assessment, plan, allocation, asset dispatch, acknowledgement, telemetry, fault, service outcome and reconciliation. CI deliberately breaks value, time, range, capability, profile, correlation and reconciliation rules and verifies that each invalid fixture is rejected.
+
+This completes the repository's provider-neutral ontology baseline for the currently defined EMS scope. The completion gate still requires the scope owner to review the register against the actual intended site and equipment requirements; an uncovered site requirement must be modeled before EMS runtime work starts. Wire-level sequencing and recovery evidence belongs to the profile-specific adapter conformance suite and must be completed before each adapter is treated as ready. No EMS runtime, interface or ChargeWeave integration is part of this ontology change.

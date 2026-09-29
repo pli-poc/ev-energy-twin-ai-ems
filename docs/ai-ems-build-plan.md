@@ -74,7 +74,7 @@ The ontology uses neutral EMS terms and protocol adapter boundaries so it can be
 - Complete the adapter ontology and profile registry: standards authority and exact version/edition, module/feature subset, canonical mappings, profile revisions, supported capabilities, exchange evidence, virtual/replay/shadow/live mode and conformance results. Keep wire payload classes outside the canonical business vocabulary.
 - Maintain a requirements-to-model coverage matrix. Every required input, output, state, capability, error and feedback field links to an ontology term, SHACL rule, positive fixture, deliberate negative fixture, adapter profile (or a documented provider-neutral boundary) and acceptance scenario.
 - Pin standards profiles and exclusions in `docs/standards-and-adapters.md`; validate representative weather, inverter/storage, building, grid-event, tariff, OCPP and optional roaming/vehicle-side boundaries. Track ontology evidence against [`docs/ontology-coverage.md`](ontology-coverage.md); a passing parser or single example is not the completeness gate.
-- Add end-to-end examples for normal behavior and failure/recovery paths. Validate Turtle, JSON contracts, SHACL shapes and fixtures in CI, including good, stale, missing, invalid, revised, duplicate, late and out-of-order data.
+- Add end-to-end semantic examples for normal behavior and invalid/missing/stale/revised input. Validate Turtle, JSON contracts, SHACL shapes and semantic fixtures in CI. Sequencing, duplicate, late, timeout, retry and recovery behavior is assigned to the specific adapter profile and must pass before that adapter is treated as ready.
 - Define replay/run metadata (scenario fingerprint, fixed clock, seed, PRNG and simulator/profile versions), correlation and identifier/privacy policy, and schema/version migration rules.
 
 **Exit gate:** no required domain input/output, physical capability, lifecycle state, error, feedback or provenance field is unexplained in the coverage register; each external boundary has a canonical contract and pinned standard/data profile or a reviewed reason to remain provider-neutral; all positive and negative fixtures pass. No EMS runtime, UI or adapter implementation begins before this gate.
@@ -99,7 +99,7 @@ The ontology uses neutral EMS terms and protocol adapter boundaries so it can be
 ### Phase 4 — Simulate protocol commands and charger feedback
 
 - Add protocol-neutral command intents, lifecycle states, correlation and expiry.
-- Implement a simulated OCPP adapter for a deliberately selected protocol version/profile; test accepted, rejected, delayed, duplicated and missing acknowledgements.
+- Implement a simulated OCPP 2.1 Edition 2 adapter profile for a deliberately selected fixture subset; test accepted, rejected, delayed, duplicated and missing acknowledgements against the declared OCA/IEC release artifacts.
 - Simulate measured power, meter energy, status, faults, cable/connector state and optional SOC separately from requested command values.
 - Reconcile intent → acknowledgement → observed behavior and feed residuals back to the twin.
 

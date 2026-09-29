@@ -18,6 +18,32 @@ ontology = load(ROOT / "ontology/ai-ems.ttl")
 shapes = load(ROOT / "ontology/shapes.ttl")
 example = load(ROOT / "ontology/examples/closed-loop.ttl")
 
+required_example_classes = {
+    AIEMS.WeatherObservation,
+    AIEMS.WeatherForecast,
+    AIEMS.PVObservation,
+    AIEMS.BuildingLoadObservation,
+    AIEMS.GridObservation,
+    AIEMS.BatteryObservation,
+    AIEMS.EVSEObservation,
+    AIEMS.CustomerServiceRequirement,
+    AIEMS.CapabilityDeclaration,
+    AIEMS.AdapterProfile,
+    AIEMS.VirtualAdapter,
+    AIEMS.ProtocolExchange,
+    AIEMS.SimulationRun,
+    AIEMS.AssetDispatch,
+    AIEMS.ServiceOutcome,
+    AIEMS.FaultEvent,
+    AIEMS.OperationalStateEvent,
+    AIEMS.SpatialLocation,
+    AIEMS.ConformanceScenario,
+    AIEMS.ConformanceResult,
+}
+missing_classes = required_example_classes - set(example.objects(None, RDF.type))
+if missing_classes:
+    raise SystemExit(f"Closed-loop fixture is missing required domain slices: {sorted(map(str, missing_classes))}")
+
 conforms, _, report = validate(
     example,
     shacl_graph=shapes,
@@ -110,4 +136,69 @@ bad_profile_conforms, _, _ = validate(
 if bad_profile_conforms:
     raise SystemExit("SHACL accepted an adapter profile without a declared subset.")
 
-print("PASS: ontology and SHACL parse; closed-loop fixture conforms; weather target time and adapter subset are required; invalid inputs are rejected.")
+# Physical ranges and declared capabilities constrain dispatch.
+weather = EX["weather-temperature"]
+bad_weather = Graph()
+for triple in example:
+    bad_weather.add(triple)
+bad_weather.remove((weather, AIEMS.relativeHumidityPercent, None))
+bad_weather.add((weather, AIEMS.relativeHumidityPercent, Literal(120.0)))
+bad_weather_conforms, _, _ = validate(
+    bad_weather,
+    shacl_graph=shapes,
+    ont_graph=ontology,
+    inference="rdfs",
+    advanced=True,
+)
+if bad_weather_conforms:
+    raise SystemExit("SHACL accepted relative humidity above 100 percent.")
+
+capability = EX["smart-charging-capability"]
+unsupported_capability = Graph()
+for triple in example:
+    unsupported_capability.add(triple)
+unsupported_capability.remove((capability, AIEMS.capabilityStatus, None))
+unsupported_capability.add((capability, AIEMS.capabilityStatus, Literal("unsupported")))
+unsupported_conforms, _, _ = validate(
+    unsupported_capability,
+    shacl_graph=shapes,
+    ont_graph=ontology,
+    inference="rdfs",
+    advanced=True,
+)
+if unsupported_conforms:
+    raise SystemExit("SHACL accepted a smart-charging command for an unsupported EVSE capability.")
+
+acknowledgement = EX["ack-001"]
+bad_ack_correlation = Graph()
+for triple in example:
+    bad_ack_correlation.add(triple)
+bad_ack_correlation.remove((acknowledgement, AIEMS.correlationId, None))
+bad_ack_correlation.add((acknowledgement, AIEMS.correlationId, Literal("wrong-correlation")))
+bad_ack_conforms, _, _ = validate(
+    bad_ack_correlation,
+    shacl_graph=shapes,
+    ont_graph=ontology,
+    inference="rdfs",
+    advanced=True,
+)
+if bad_ack_conforms:
+    raise SystemExit("SHACL accepted an acknowledgement with a mismatched correlation ID.")
+
+reconciliation = EX["reconciliation-001"]
+bad_reconciliation = Graph()
+for triple in example:
+    bad_reconciliation.add(triple)
+bad_reconciliation.remove((reconciliation, AIEMS.acknowledgedPowerKw, None))
+bad_reconciliation.add((reconciliation, AIEMS.acknowledgedPowerKw, Literal(5.0)))
+bad_reconciliation_conforms, _, _ = validate(
+    bad_reconciliation,
+    shacl_graph=shapes,
+    ont_graph=ontology,
+    inference="rdfs",
+    advanced=True,
+)
+if bad_reconciliation_conforms:
+    raise SystemExit("SHACL accepted reconciliation power that differs from the command acknowledgement.")
+
+print("PASS: ontology and SHACL parse; full-domain fixture conforms; value, time, range, capability, correlation and reconciliation violations are rejected.")
