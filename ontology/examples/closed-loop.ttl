@@ -9,6 +9,16 @@ ex:source-openadr a aiems:DataSource ; aiems:identifier "openadr-simulator" .
 ex:source-charger a aiems:DataSource ; aiems:identifier "ocpp-simulator" .
 ex:source-meter a aiems:DataSource ; aiems:identifier "meter-simulator" .
 ex:source-market a aiems:DataSource ; aiems:identifier "market-simulator" .
+ex:source-weather a aiems:DataSource ; aiems:identifier "weather-simulator" .
+ex:standard-ocpp a aiems:StandardReference ;
+  aiems:standardIdentifier "IEC 63584-210" ; aiems:standardVersion "2026" ; aiems:standardEdition "Edition 2.0" .
+ex:profile-ocpp-21 a aiems:AdapterProfile ;
+  aiems:profileIdentifier "ocpp-21-ems-fixture" ; aiems:profileVersion "0.1.0" ;
+  aiems:profileSubset "OCPP 2.1 Edition 2 smart charging, status, transaction events and meter values fixture subset; local conformance fixtures, not certification" ;
+  aiems:referencesStandard ex:standard-ocpp .
+ex:virtual-charger a aiems:VirtualAdapter ;
+  aiems:adapterBoundary "EVSE control and feedback" ; aiems:adapterMode "virtual" ;
+  aiems:implementsProfile ex:profile-ocpp-21 .
 
 ex:event-001 a aiems:OpenADRSignal ;
   aiems:eventId "event-001" ; aiems:signalType "import-limit-reduction" ;
@@ -17,14 +27,23 @@ ex:event-001 a aiems:OpenADRSignal ;
   aiems:validUntil "2026-09-30T10:00:00Z"^^xsd:dateTime ;
   aiems:eventStatus "active" ; aiems:targetReductionKw 15.0 ; aiems:providedBy ex:source-openadr .
 
-ex:pv-observation a aiems:Observation ;
-  aiems:aboutAsset ex:site ; aiems:quantityKind "pv-active-power" ; aiems:numericValue 32.0 ; aiems:unit "kW" ;
+ex:pv-observation a aiems:PVObservation ;
+  aiems:aboutAsset ex:site ; aiems:quantityKind "pv-active-power" ; aiems:numericValue 32.0 ; aiems:unit "kW" ; aiems:pvACPowerKw 32.0 ;
   aiems:observedAt "2026-09-30T08:55:00Z"^^xsd:dateTime ; aiems:recordedAt "2026-09-30T08:55:02Z"^^xsd:dateTime ;
   aiems:dataQuality "good" ; aiems:providedBy ex:source-meter .
-ex:building-load-observation a aiems:Observation ;
-  aiems:aboutAsset ex:site ; aiems:quantityKind "building-active-power" ; aiems:numericValue 27.0 ; aiems:unit "kW" ;
+ex:building-load-observation a aiems:BuildingLoadObservation ;
+  aiems:aboutAsset ex:site ; aiems:quantityKind "building-active-power" ; aiems:numericValue 27.0 ; aiems:unit "kW" ; aiems:buildingLoadKw 27.0 ;
   aiems:observedAt "2026-09-30T08:55:00Z"^^xsd:dateTime ; aiems:recordedAt "2026-09-30T08:55:02Z"^^xsd:dateTime ;
   aiems:dataQuality "good" ; aiems:providedBy ex:source-meter .
+ex:weather-temperature a aiems:WeatherObservation ;
+  aiems:aboutAsset ex:site ; aiems:quantityKind "ambient-temperature" ; aiems:numericValue 21.5 ; aiems:unit "Cel" ; aiems:ambientTemperatureC 21.5 ;
+  aiems:observedAt "2026-09-30T08:55:00Z"^^xsd:dateTime ; aiems:recordedAt "2026-09-30T08:55:02Z"^^xsd:dateTime ;
+  aiems:dataQuality "good" ; aiems:providedBy ex:source-weather .
+ex:weather-forecast a aiems:WeatherForecast ;
+  aiems:quantityKind "global-horizontal-irradiance" ; aiems:numericValue 510.0 ; aiems:unit "W.m-2" ;
+  aiems:issuedAt "2026-09-30T08:45:00Z"^^xsd:dateTime ; aiems:forecastFor "2026-09-30T09:00:00Z"^^xsd:dateTime ;
+  aiems:observedAt "2026-09-30T08:45:00Z"^^xsd:dateTime ; aiems:recordedAt "2026-09-30T08:45:01Z"^^xsd:dateTime ;
+  aiems:confidence 0.81 ; aiems:dataQuality "estimated" ; aiems:providedBy ex:source-weather .
 ex:price-interval-001 a aiems:PriceInterval ;
   aiems:pricePerKwh 0.24 ; aiems:currency "EUR" ; aiems:priceType "synthetic-day-ahead" ; aiems:pricePeriod "PT15M" ;
   aiems:validFrom "2026-09-30T09:00:00Z"^^xsd:dateTime ; aiems:validUntil "2026-09-30T09:15:00Z"^^xsd:dateTime ;
@@ -64,7 +83,7 @@ ex:command-001 a aiems:CommandIntent ;
   aiems:commandId "cmd-001" ; aiems:correlationId "corr-001" ; aiems:targetsEVSE ex:evse-01 ;
   aiems:targetsSession ex:session-001 ; aiems:commandAction "set-charging-power-limit" ; aiems:commandLimitKw 6.0 ;
   aiems:validFrom "2026-09-30T09:00:00Z"^^xsd:dateTime ; aiems:validUntil "2026-09-30T09:05:00Z"^^xsd:dateTime ;
-  aiems:protocolName "OCPP" ; aiems:protocolVersion "to-be-selected" .
+  aiems:protocolName "OCPP" ; aiems:protocolVersion "2.1 Edition 2" .
 
 ex:ack-001 a aiems:CommandAcknowledgement ;
   aiems:acknowledges ex:command-001 ; aiems:correlationId "corr-001" ; aiems:commandStatus "accepted" ;
@@ -77,3 +96,14 @@ ex:feedback-001 a aiems:MeterReading ;
 ex:reconciliation-001 a aiems:Reconciliation ;
   aiems:reconcilesCommand ex:command-001 ; aiems:usesFeedback ex:feedback-001 ;
   aiems:plannedPowerKw 6.0 ; aiems:measuredPowerKw 5.8 ; aiems:deviationKind "within-tolerance" .
+
+ex:run-001 a aiems:SimulationRun ;
+  aiems:identifier "run-001" ; aiems:createdAt "2026-09-30T08:56:00Z"^^xsd:dateTime ;
+  aiems:scenarioFingerprint "sha256:demo-scenario" ; aiems:deterministicSeed "1701" ;
+  aiems:prngVersion "xorshift32-v1" ; aiems:simulatorVersion "ai-ems-sim-0.1.0" ;
+  aiems:usesAdapter ex:virtual-charger .
+ex:exchange-command-001 a aiems:ProtocolExchange ;
+  aiems:messageType "SetChargingProfile" ; aiems:exchangeDirection "outbound" ;
+  aiems:exchangeStatus "accepted" ; aiems:recordedAt "2026-09-30T09:00:00Z"^^xsd:dateTime ;
+  aiems:payloadDigest "sha256:fixture-command" .
+ex:virtual-charger aiems:exchangesProtocolMessage ex:exchange-command-001 .

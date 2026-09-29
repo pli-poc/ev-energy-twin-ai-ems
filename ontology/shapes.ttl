@@ -21,6 +21,52 @@ aiems:ForecastShape a sh:NodeShape ;
   sh:property [ sh:path aiems:forecastFor ; sh:datatype xsd:dateTime ; sh:minCount 1 ] ;
   sh:property [ sh:path aiems:confidence ; sh:datatype xsd:decimal ; sh:minCount 1 ; sh:minInclusive 0 ; sh:maxInclusive 1 ] .
 
+aiems:WeatherObservationShape a sh:NodeShape ;
+  sh:targetClass aiems:WeatherObservation ;
+  sh:property [ sh:path aiems:aboutAsset ; sh:minCount 1 ] ;
+  sh:property [ sh:path aiems:quantityKind ; sh:in ( "ambient-temperature" "relative-humidity" "wind-speed" "wind-direction" "precipitation-rate" "cloud-cover" "global-horizontal-irradiance" "direct-normal-irradiance" "diffuse-horizontal-irradiance" ) ; sh:minCount 1 ] .
+
+aiems:WeatherForecastShape a sh:NodeShape ;
+  sh:targetClass aiems:WeatherForecast ;
+  sh:property [ sh:path aiems:issuedAt ; sh:datatype xsd:dateTime ; sh:minCount 1 ] ;
+  sh:property [ sh:path aiems:forecastFor ; sh:datatype xsd:dateTime ; sh:minCount 1 ] ;
+  sh:property [ sh:path aiems:quantityKind ; sh:minCount 1 ] .
+
+aiems:BatteryObservationShape a sh:NodeShape ;
+  sh:targetClass aiems:BatteryObservation ;
+  sh:property [ sh:path aiems:aboutAsset ; sh:minCount 1 ] ;
+  sh:property [ sh:path aiems:quantityKind ; sh:in ( "battery-power" "state-of-charge" "stored-energy" "available-charge-power" "available-discharge-power" ) ; sh:minCount 1 ] .
+
+aiems:AdapterProfileShape a sh:NodeShape ;
+  sh:targetClass aiems:AdapterProfile ;
+  sh:property [ sh:path aiems:profileIdentifier ; sh:datatype xsd:string ; sh:minCount 1 ] ;
+  sh:property [ sh:path aiems:profileVersion ; sh:datatype xsd:string ; sh:minCount 1 ] ;
+  sh:property [ sh:path aiems:profileSubset ; sh:datatype xsd:string ; sh:minCount 1 ] ;
+  sh:property [ sh:path aiems:referencesStandard ; sh:class aiems:StandardReference ; sh:minCount 1 ] .
+
+aiems:BoundaryAdapterShape a sh:NodeShape ;
+  sh:targetClass aiems:BoundaryAdapter ;
+  sh:property [ sh:path aiems:adapterBoundary ; sh:datatype xsd:string ; sh:minCount 1 ] ;
+  sh:property [ sh:path aiems:adapterMode ; sh:in ( "virtual" "replay" "shadow" "live" ) ; sh:minCount 1 ] ;
+  sh:property [ sh:path aiems:implementsProfile ; sh:class aiems:AdapterProfile ; sh:minCount 1 ] .
+
+aiems:SimulationRunShape a sh:NodeShape ;
+  sh:targetClass aiems:SimulationRun ;
+  sh:property [ sh:path aiems:identifier ; sh:datatype xsd:string ; sh:minCount 1 ] ;
+  sh:property [ sh:path aiems:createdAt ; sh:datatype xsd:dateTime ; sh:minCount 1 ] ;
+  sh:property [ sh:path aiems:scenarioFingerprint ; sh:datatype xsd:string ; sh:minCount 1 ] ;
+  sh:property [ sh:path aiems:deterministicSeed ; sh:datatype xsd:string ; sh:minCount 1 ] ;
+  sh:property [ sh:path aiems:prngVersion ; sh:datatype xsd:string ; sh:minCount 1 ] ;
+  sh:property [ sh:path aiems:simulatorVersion ; sh:datatype xsd:string ; sh:minCount 1 ] ;
+  sh:property [ sh:path aiems:usesAdapter ; sh:class aiems:BoundaryAdapter ; sh:minCount 1 ] .
+
+aiems:ProtocolExchangeShape a sh:NodeShape ;
+  sh:targetClass aiems:ProtocolExchange ;
+  sh:property [ sh:path aiems:messageType ; sh:datatype xsd:string ; sh:minCount 1 ] ;
+  sh:property [ sh:path aiems:exchangeDirection ; sh:in ( "inbound" "outbound" ) ; sh:minCount 1 ] ;
+  sh:property [ sh:path aiems:exchangeStatus ; sh:datatype xsd:string ; sh:minCount 1 ] ;
+  sh:property [ sh:path aiems:recordedAt ; sh:datatype xsd:dateTime ; sh:minCount 1 ] .
+
 aiems:PriceIntervalShape a sh:NodeShape ;
   sh:targetClass aiems:PriceInterval ;
   sh:property [ sh:path aiems:pricePerKwh ; sh:datatype xsd:decimal ; sh:minCount 1 ] ;

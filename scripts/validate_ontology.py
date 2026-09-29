@@ -5,6 +5,7 @@ from rdflib import Graph, Literal, Namespace, RDF
 
 ROOT = Path(__file__).resolve().parents[1]
 AIEMS = Namespace("https://w3id.org/ev-energy-twin/ai-ems#")
+EX = Namespace("https://example.org/ai-ems/demo#")
 
 
 def load(path: Path) -> Graph:
@@ -48,7 +49,7 @@ if invalid_conforms:
 missing_value = Graph()
 for triple in example:
     missing_value.add(triple)
-observation = next(missing_value.subjects(RDF.type, AIEMS.Observation))
+observation = EX["pv-observation"]
 missing_value.remove((observation, AIEMS.numericValue, None))
 missing_value.remove((observation, AIEMS.dataQuality, None))
 missing_value.add((observation, AIEMS.dataQuality, Literal("missing")))
@@ -65,7 +66,7 @@ if not missing_conforms:
 bad_observation = Graph()
 for triple in example:
     bad_observation.add(triple)
-good_observation = next(bad_observation.subjects(RDF.type, AIEMS.Observation))
+good_observation = EX["pv-observation"]
 bad_observation.remove((good_observation, AIEMS.numericValue, None))
 bad_conforms, _, _ = validate(
     bad_observation,
@@ -77,4 +78,36 @@ bad_conforms, _, _ = validate(
 if bad_conforms:
     raise SystemExit("SHACL accepted an observation with good quality but no value.")
 
-print("PASS: ontology and SHACL parse; closed-loop fixture conforms; missing data is explicit; invalid inputs are rejected.")
+# Weather data stays typed and distinguishes a forecast's issue and target times.
+weather_forecast = next(example.subjects(RDF.type, AIEMS.WeatherForecast))
+bad_forecast = Graph()
+for triple in example:
+    bad_forecast.add(triple)
+bad_forecast.remove((weather_forecast, AIEMS.forecastFor, None))
+bad_forecast_conforms, _, _ = validate(
+    bad_forecast,
+    shacl_graph=shapes,
+    ont_graph=ontology,
+    inference="rdfs",
+    advanced=True,
+)
+if bad_forecast_conforms:
+    raise SystemExit("SHACL accepted a weather forecast without its target valid time.")
+
+# A versioned protocol boundary must identify the tested feature subset.
+profile = next(example.subjects(RDF.type, AIEMS.AdapterProfile))
+bad_profile = Graph()
+for triple in example:
+    bad_profile.add(triple)
+bad_profile.remove((profile, AIEMS.profileSubset, None))
+bad_profile_conforms, _, _ = validate(
+    bad_profile,
+    shacl_graph=shapes,
+    ont_graph=ontology,
+    inference="rdfs",
+    advanced=True,
+)
+if bad_profile_conforms:
+    raise SystemExit("SHACL accepted an adapter profile without a declared subset.")
+
+print("PASS: ontology and SHACL parse; closed-loop fixture conforms; weather target time and adapter subset are required; invalid inputs are rejected.")

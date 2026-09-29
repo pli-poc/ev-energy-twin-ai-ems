@@ -1,6 +1,6 @@
 # AI EMS build plan
 
-**Status:** proposed implementation sequence; domain vocabulary v0.1 is in `ontology/`.
+**Status:** ontology-first plan. Vocabulary v0.1 is an initial draft, not build-ready. EMS runtime and adapter implementation starts only after the Phase 1 domain-completeness gate passes.
 
 ## Goal
 
@@ -38,19 +38,20 @@ The AI model must not issue charger commands, invent measurements, override a sa
 | EV and charging service | Pseudonymous vehicle/session reference, arrival/connection/departure, requested energy or target SOC, measured delivered energy/SOC where available, customer/service priority and consent/policy constraints | Per-session energy/power allocation, readiness estimate, expected shortfall and reason; no unsupported promise of target completion |
 | Charging equipment | EVSE/connector identity, availability, operational status, rated/min/max power, supported phases/current, power factor if supplied, protocol/version, capability and freshness | Protocol-neutral command intent, encoded command, expiry, correlation ID, delivery result and command history |
 | Charger feedback | Accepted/rejected/unknown acknowledgement, status notifications, measured active power, meter start/stop/interval readings, cumulative energy, connector state, faults, availability, optional SOC, event/receipt time and quality | Reconciliation of requested versus acknowledged versus measured behavior, deviations, state updates, replanning trigger and audit trail |
-| Forecast and weather | Ambient conditions, solar forecast, site load forecast, forecast issue time, target interval, horizon and confidence | Forecast error metrics, revised schedule and the reason for a replan |
+| Weather and renewable inputs | Observed and forecast ambient temperature, relative humidity, wind speed/direction, precipitation, cloud cover, global/direct/diffuse irradiance; PV AC/DC power, available power and curtailment; forecast issue time, target valid interval, horizon, member and confidence | Weather/solar forecast error, revised schedule and the reason for a replan |
 
-Every observation uses a value plus an explicit unit and `observedAt`, `recordedAt`, source, quality, and, where relevant, `validFrom`/`validUntil`. A forecast also records issue time, target time/horizon and confidence. Event time must not be confused with ingestion time. Session and asset identifiers are stable within a scenario but vehicle identity should be pseudonymous; the EMS model does not need names or account details.
+Every observation uses a quantity kind, value, UCUM unit, `observedAt`, `recordedAt`, source, quality and, where relevant, `validFrom`/`validUntil`. A forecast records issue time separately from target valid time/window, horizon and confidence. Event time must not be confused with ingestion time. Session and asset identifiers are stable within a scenario but vehicle identity should be pseudonymous; the EMS model does not need names or account details.
 
 ## Initial semantic model
 
-The independent v0.1 vocabulary in `ontology/ai-ems.ttl` covers:
+The independent v0.2 vocabulary in `ontology/ai-ems.ttl` starts to cover:
 
 - Site, grid connection, PV, stationary storage, EVSE, connector, vehicle and charging session.
 - External signal, OpenADR signal, price signal, grid constraint, observation, forecast and data source.
 - Operating constraint, site policy, AI event/flexibility assessment and strategy recommendation.
 - EMS plan, per-session power allocation, protocol-neutral command intent, command acknowledgement, charger feedback, meter reading and delivery reconciliation.
 - Provenance, quality, validity, command correlation and temporal properties needed to reproduce a decision and explain divergence from reality.
+- Typed environmental/energy observations and forecasts, plus adapter profiles, standards references, protocol exchanges, conformance evidence and deterministic simulation-run metadata.
 
 `ontology/shapes.ttl` defines the first SHACL checks. The closed-loop example in `ontology/examples/` demonstrates the minimum trace from a grid signal through assessment and allocation to command, acknowledgement and measured feedback. OWL supplies shared types and relationships; SHACL validates required fields and invariants at data boundaries. Neither is used as a substitute for the deterministic optimizer.
 
@@ -66,14 +67,17 @@ The ontology uses neutral EMS terms and protocol adapter boundaries so it can be
 
 **Exit:** app builds under its own base path and existing strategy behavior remains unchanged.
 
-### Phase 1 — Freeze the semantic and interchange contracts
+### Phase 1 — Complete and freeze the domain model (gate before EMS build)
 
-- Review the v0.1 OWL vocabulary and SHACL shapes against the input/output inventory above.
-- Validate Turtle and the end-to-end example in GitHub Actions.
-- Define JSON representations and version rules from the ontology; add synthetic fixtures for good, stale, missing, invalid and revised signals.
-- Define event-time versus recorded-time handling, unit normalization, correlation IDs, and identifier/privacy policy.
+- Complete the canonical domain surface for site/grid connection, weather observations and forecasts, PV, tariffs/prices, grid/flexibility signals, building/flexible load, storage, vehicles/sessions, EVSE/connectors/capabilities, plans, service outcomes, dispatch, command lifecycle, acknowledgements, telemetry, faults, reconciliation and fallback.
+- Define every quantity's meaning, direction, unit convention, event/valid/recorded time, quality, source/provenance, uncertainty and missing/unknown behavior. Use UCUM-coded units and explicit import/export direction.
+- Complete the adapter ontology and profile registry: standards authority and exact version/edition, module/feature subset, canonical mappings, profile revisions, supported capabilities, exchange evidence, virtual/replay/shadow/live mode and conformance results. Keep wire payload classes outside the canonical business vocabulary.
+- Maintain a requirements-to-model coverage matrix. Every required input, output, state, capability, error and feedback field links to an ontology term, SHACL rule, positive fixture, deliberate negative fixture, adapter profile (or a documented provider-neutral boundary) and acceptance scenario.
+- Pin standards profiles and exclusions in `docs/standards-and-adapters.md`; validate representative weather, inverter/storage, building, grid-event, tariff, OCPP and optional roaming/vehicle-side boundaries. Track ontology evidence against [`docs/ontology-coverage.md`](ontology-coverage.md); a passing parser or single example is not the completeness gate.
+- Add end-to-end examples for normal behavior and failure/recovery paths. Validate Turtle, JSON contracts, SHACL shapes and fixtures in CI, including good, stale, missing, invalid, revised, duplicate, late and out-of-order data.
+- Define replay/run metadata (scenario fingerprint, fixed clock, seed, PRNG and simulator/profile versions), correlation and identifier/privacy policy, and schema/version migration rules.
 
-**Exit:** sample input can be validated, replayed and traced from a source observation to a decision and charger feedback; malformed or stale data is detected explicitly.
+**Exit gate:** no required domain input/output, physical capability, lifecycle state, error, feedback or provenance field is unexplained in the coverage register; each external boundary has a canonical contract and pinned standard/data profile or a reviewed reason to remain provider-neutral; all positive and negative fixtures pass. No EMS runtime, UI or adapter implementation begins before this gate.
 
 ### Phase 2 — Build a deterministic input and event pipeline
 
@@ -118,7 +122,7 @@ The ontology uses neutral EMS terms and protocol adapter boundaries so it can be
 
 ## First implementation slice
 
-Start with Phase 1, then create one deterministic, replayable grid-event scenario that includes a time-limited import constraint, PV/load observations, an active session with a departure need, one optimizer decision, one OCPP command intent, a charger acknowledgement, measured power/meter feedback, and a reconciliation result. Add a second session and a fault or rejected-command variant next. This proves the semantic loop before adding a model, a live service, or another interface.
+After the Phase 1 gate, create one deterministic, replayable grid-event scenario that includes explicit weather/solar and energy observations, tariff and grid constraints, an active session with a departure need, one optimizer decision, one OCPP-profile command intent, a charger acknowledgement, measured power/meter/status feedback, and a reconciliation result. Add rejected, delayed, duplicate and fault/recovery variants. This proves the semantic loop before adding a model, a live service, or another interface.
 
 ## Decision points before a real charger connection
 
