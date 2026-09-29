@@ -4,8 +4,8 @@ import "./globals.css";
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export const metadata: Metadata = {
-  title: "Future EV · Energy Twin",
-  description: "Explore a smart building, realistic vehicle arrivals and departures, and site energy management in 3D.",
+  title: "EV Energy Twin AI EMS",
+  description: "Explore EV charging, site energy signals and AI-assisted energy management in a simulated energy twin.",
   icons: {
     icon: `${basePath}/favicon.svg`,
     shortcut: `${basePath}/favicon.svg`,

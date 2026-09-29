@@ -1,6 +1,6 @@
 # Strategy comparison — comparison-1.0.0
 
-This release changes only the isolated `ev-energy-twin-optimizer` repository. The V1 campus renderer and layout remain in place.
+This release changes only the isolated `ev-energy-twin-ai-ems` repository. The V1 campus renderer and layout remain in place.
 
 ## One physical engine, six controllers
 
@@ -37,10 +37,10 @@ For article figures, use these exports rather than the unverified example number
 ## Tests
 
 ```
-npm install
+npm ci
 npx tsc lib/twin/engine.ts lib/twin/optimizer.ts lib/twin/comparison.ts --target es2022 --module commonjs --strict --skipLibCheck --outDir .test-build
 node --test tests/comparison.cjs
-NEXT_PUBLIC_BASE_PATH=/ev-energy-twin-optimizer npm run build:pages
+NEXT_PUBLIC_BASE_PATH=/ev-energy-twin-ai-ems npm run build:pages
 ```
 
 PR validation additionally runs Chromium against the static export and checks all six replay labels, reference stability, chart switching, EUR exports, browser restore, shared tariff controls and mobile replay. Screenshots are retained as a CI artifact.

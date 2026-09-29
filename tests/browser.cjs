@@ -4,15 +4,15 @@ const fs=require('node:fs');
 const {spawn}=require('node:child_process');
 (async()=>{
  fs.mkdirSync('.preview',{recursive:true});fs.mkdirSync('test-results',{recursive:true});
- if(!fs.existsSync('.preview/ev-energy-twin-optimizer'))fs.symlinkSync('../out','.preview/ev-energy-twin-optimizer','dir');
+ if(!fs.existsSync('.preview/ev-energy-twin-ai-ems'))fs.symlinkSync('../out','.preview/ev-energy-twin-ai-ems','dir');
  const server=spawn('python3',['-m','http.server','4173','--directory','.preview'],{stdio:'ignore'});
  let browser;
  try{
-  for(let i=0;i<60;i++){try{const r=await fetch('http://127.0.0.1:4173/ev-energy-twin-optimizer/');if(r.ok)break;}catch{}await new Promise(r=>setTimeout(r,500));}
+  for(let i=0;i<60;i++){try{const r=await fetch('http://127.0.0.1:4173/ev-energy-twin-ai-ems/');if(r.ok)break;}catch{}await new Promise(r=>setTimeout(r,500));}
   browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   const page=await browser.newPage({viewport:{width:1600,height:1000},acceptDownloads:true});page.setDefaultTimeout(30000);
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
-  await page.goto('http://127.0.0.1:4173/ev-energy-twin-optimizer/',{waitUntil:'networkidle'});
+  await page.goto('http://127.0.0.1:4173/ev-energy-twin-ai-ems/',{waitUntil:'networkidle'});
   await page.getByRole('heading',{name:'One site. A shared energy system.',exact:true}).waitFor();
   await page.getByRole('button',{name:'Compare strategies',exact:true}).click();
   await page.getByRole('heading',{name:'Six strategies. One set of assumptions.',exact:true}).waitFor();
