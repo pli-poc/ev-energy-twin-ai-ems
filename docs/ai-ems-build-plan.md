@@ -1,6 +1,6 @@
 # AI EMS build plan
 
-**Status:** ontology-first plan. Vocabulary v0.1 is an initial draft, not build-ready. EMS runtime and adapter implementation starts only after the Phase 1 domain-completeness gate passes.
+**Status:** Ontology v0.2 is the semantic baseline. A synthetic reference lab now exercises deterministic event replay through virtual command, meter feedback and reconciliation. The Phase 1 target-site scope review remains open; the lab supports contract review and does not authorize site-specific, live or production dispatch work.
 
 ## Goal
 
@@ -77,7 +77,7 @@ The ontology uses neutral EMS terms and protocol adapter boundaries so it can be
 - Add end-to-end semantic examples for normal behavior and invalid/missing/stale/revised input. Validate Turtle, JSON contracts, SHACL shapes and semantic fixtures in CI. Sequencing, duplicate, late, timeout, retry and recovery behavior is assigned to the specific adapter profile and must pass before that adapter is treated as ready.
 - Define replay/run metadata (scenario fingerprint, fixed clock, seed, PRNG and simulator/profile versions), correlation and identifier/privacy policy, and schema/version migration rules.
 
-**Exit gate:** no required domain input/output, physical capability, lifecycle state, error, feedback or provenance field is unexplained in the coverage register; each external boundary has a canonical contract and pinned standard/data profile or a reviewed reason to remain provider-neutral; all positive and negative fixtures pass. No EMS runtime, UI or adapter implementation begins before this gate.
+**Exit gate:** no required domain input/output, physical capability, lifecycle state, error, feedback or provenance field is unexplained in the coverage register; each external boundary has a canonical contract and pinned standard/data profile or a reviewed reason to remain provider-neutral; all positive and negative fixtures pass. The synthetic replay lab below is a bounded contract-review artifact; site-specific runtime, external adapters and dispatch integration remain gated on this sign-off.
 
 ### Phase 2 — Build a deterministic input and event pipeline
 
@@ -120,9 +120,15 @@ The ontology uses neutral EMS terms and protocol adapter boundaries so it can be
 
 **Exit:** this phase produces a reviewed integration proposal only; it does not make the EMS repository depend on or modify ChargeWeave.
 
-## First implementation slice
+## Synthetic reference slice (delivered 2026-09-30)
 
-After the Phase 1 gate, create one deterministic, replayable grid-event scenario that includes explicit weather/solar and energy observations, tariff and grid constraints, an active session with a departure need, one optimizer decision, one OCPP-profile command intent, a charger acknowledgement, measured power/meter/status feedback, and a reconciliation result. Add rejected, delayed, duplicate and fault/recovery variants. This proves the semantic loop before adding a model, a live service, or another interface.
+The route `/replay/` and `lib/twin/replay.ts` implement a bounded, deterministic demonstration using the existing Energy Twin as the physical engine. The reference trace covers a normalized synthetic event, a versioned snapshot, a deterministic assessment, a separately validated plan, a protocol-neutral intent, a virtual response, measured charger feedback and reconciliation.
+
+The fixture set covers a 50 kW import-limit event, a solar shortfall, charger fault and recovery, remote-link loss and recovery, and infeasible vehicle demand. Event replay keeps event time, receipt time, validity, source, quality and revision; duplicate, conflicting, stale, out-of-order, revised and cancelled events have explicit outcomes. Rules-only recommendations can fall back when the assessor is unavailable or malformed. The planner still passes through the physical simulator and an independent site/session validator. Virtual charger fixtures exercise accepted, rejected, delayed, duplicated and missing acknowledgements; measured power and meter energy remain separate from requested and acknowledged values.
+
+**This does not close Phase 1 or complete production-ready Phases 2–5.** The reference profile covers selected synthetic cases only; the OCPP-shaped response is not a wire adapter or conformance test, and a replay does not demonstrate continuous or automatic replanning. Review the target site, equipment, source authority, signal profile, meter semantics and service policy before adding site-specific behavior. There is no live feed, real charger connection, control authorization or ChargeWeave dependency.
+
+**CI evidence:** the replay invariants run in `tests/replay.cjs`; the route and its mobile controls run in the GitHub Actions browser suite.
 
 ## Decision points before a real charger connection
 
