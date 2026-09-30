@@ -30,7 +30,7 @@ export function runAnnualBacktest(settings:AnnualSettings,onProgress?:(p:AnnualB
   for(const run of comparison.runs){
    if(run.id==='ml')continue;
    let sum=sums.get(run.id);
-   if(!sum){sum={id:run.id,name:run.name,importCost:0,exportCredit:0,energyCost:0,requestedKwh:0,deliveredKwh:0,shortfallKwh:0,ready:0,departed:0,readinessPct:0,violationMinutes:0,excessKwh:0,peakKw:0,quarterPeakKw:0};sums.set(run.id,sum);}
+   if(!sum){sum={id:run.id,name:run.name,importCost:0,exportCredit:0,energyCost:0,capacityCostEur:null,totalCost:0,requestedKwh:0,deliveredKwh:0,shortfallKwh:0,ready:0,departed:0,readinessPct:0,violationMinutes:0,excessKwh:0,peakKw:0,quarterPeakKw:0};sums.set(run.id,sum);}
    const m=run.metrics;sum.importCost+=m.importCost;sum.exportCredit+=m.exportCredit;sum.energyCost+=m.energyCost;
    sum.requestedKwh+=m.requestedKwh;sum.deliveredKwh+=m.deliveredKwh;sum.shortfallKwh+=m.shortfallKwh;
    sum.ready+=m.ready;sum.departed+=m.departed;sum.violationMinutes+=m.violationMinutes;sum.excessKwh+=m.excessKwh;
