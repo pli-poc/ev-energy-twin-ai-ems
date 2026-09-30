@@ -4,7 +4,7 @@ import {FEATURE_NAMES,featureVector,type Sample} from './ml';
 import {YEAR_DAYS,annualPreset,seasonName,splitForDay,type AnnualSettings} from './annual';
 
 export type AnnualPolicyResult={
- id:StrategyId;name:string;importCost:number;exportCredit:number;energyCost:number;
+ id:StrategyId;name:string;importCost:number;exportCredit:number;energyCost:number;capacityCostEur:number|null;totalCost:number;
  requestedKwh:number;deliveredKwh:number;shortfallKwh:number;ready:number;departed:number;
  readinessPct:number;violationMinutes:number;excessKwh:number;peakKw:number;quarterPeakKw:number;
 };
@@ -49,12 +49,17 @@ export function runAnnualBacktest(settings:AnnualSettings,onProgress?:(p:AnnualB
   if(day%3===0||day===days-1)onProgress?.({day:day+1,total:days,rows:samples.length,season:seasonName(day)});
  }
  const splitCounts={train:samples.filter(s=>s.split==='train').length,validation:samples.filter(s=>s.split==='validation').length,test:samples.filter(s=>s.split==='test').length};
- for(const row of sums.values())row.readinessPct=row.departed?100*row.ready/row.departed:0;
+ for(const row of sums.values()){
+  row.readinessPct=row.departed?100*row.ready/row.departed:0;
+  const rate=settings.optimizer.capacityRateEurPerKwMonth??0;
+  row.capacityCostEur=rate>0?Math.max(0,row.quarterPeakKw-(settings.optimizer.existingMonthlyPeakKw??settings.optimizer.peak))*rate*12:null;
+  row.totalCost=row.energyCost+(row.capacityCostEur??0);
+ }
  const fingerprint=hash(JSON.stringify({settings:{...settings,config:{...settings.config,seed:undefined}},days,rows:samples.length,features:FEATURE_NAMES,split:'week-block-5'}));
  return {report:{schemaVersion:1,days,rows:samples.length,datasetFingerprint:fingerprint,teacherPolicy:settings.teacherPolicy,splitCounts,results:[...sums.values()]},samples};
 }
 export function annualBacktestCsv(report:AnnualBacktestReport):string{
- const columns=['strategy','days','currency','import_cost_eur','export_credit_eur','net_energy_cost_eur','requested_kwh','delivered_kwh','shortfall_kwh','ready_vehicles','departed_vehicles','readiness_pct','violation_minutes','excess_kwh','annual_max_1min_peak_kw','annual_max_15min_peak_kw'];
+ const columns=['strategy','days','currency','import_cost_eur','export_credit_eur','net_energy_cost_eur','estimated_annual_capacity_cost_eur','total_modeled_cost_eur','requested_kwh','delivered_kwh','shortfall_kwh','ready_vehicles','departed_vehicles','readiness_pct','violation_minutes','excess_kwh','annual_max_1min_peak_kw','annual_max_15min_peak_kw'];
  const quote=(v:unknown)=>'"'+String(v??'').replace(/"/g,'""')+'"';
- return [columns,...report.results.map(r=>[r.name,report.days,'EUR',r.importCost,r.exportCredit,r.energyCost,r.requestedKwh,r.deliveredKwh,r.shortfallKwh,r.ready,r.departed,r.readinessPct,r.violationMinutes,r.excessKwh,r.peakKw,r.quarterPeakKw])].map(row=>row.map(quote).join(',')).join('\n');
+ return [columns,...report.results.map(r=>[r.name,report.days,'EUR',r.importCost,r.exportCredit,r.energyCost,r.capacityCostEur,r.totalCost,r.requestedKwh,r.deliveredKwh,r.shortfallKwh,r.ready,r.departed,r.readinessPct,r.violationMinutes,r.excessKwh,r.peakKw,r.quarterPeakKw])].map(row=>row.map(quote).join(',')).join('\n');
 }
