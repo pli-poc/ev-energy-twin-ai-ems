@@ -61,7 +61,7 @@ const {spawn}=require('node:child_process');
   assert.ok((await page.locator('.ems-trace-row').nth(5).innerText()).toLowerCase().includes('fallback recorded'));
   console.log('PASS: selected simulation time exposes the EMS trace and offline local-fallback path.');
   await page.goto('http://127.0.0.1:4173/ev-energy-twin-ai-ems/training/',{waitUntil:'networkidle'});
-  await page.getByRole('heading',{name:'Train a small model inside the twin.',exact:true}).waitFor();
+  await page.getByRole('heading',{name:'Backtest one synthetic year, then train.',exact:true}).waitFor();
   assert.ok((await page.locator('.synthetic-warning').innerText()).includes('Illustrative results from synthetic data'));
   assert.equal(await page.locator('.training-flow-steps article').count(),4);
   assert.ok((await page.locator('.training-flow-storage').innerText()).includes('not uploaded to GitHub'));
