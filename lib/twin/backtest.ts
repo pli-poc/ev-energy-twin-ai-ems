@@ -1,5 +1,5 @@
 import {compareStrategies,type StrategyId} from './comparison';
-import {clock,type Config,type Frame,type Result} from './engine';
+import {type Config,type Frame,type Result} from './engine';
 import {FEATURE_NAMES,featureVector,type Sample} from './ml';
 import {YEAR_DAYS,annualPreset,seasonName,splitForDay,type AnnualSettings} from './annual';
 
@@ -15,7 +15,7 @@ export type AnnualBacktestReport={
 export type AnnualBacktestProgress={day:number;total:number;rows:number;season:string};
 const hash=(text:string)=>{let h=2166136261;for(let i=0;i<text.length;i++)h=Math.imul(h^text.charCodeAt(i),16777619)>>>0;return h.toString(16).padStart(8,'0');};
 const active=(state:Frame['cars'][number])=>state.bay>=0&&(state.status==='Charging'||state.status==='Paused');
-function averagePower(result:Result|ReturnType<typeof compareStrategies>['runs'][number]['result'],vehicleId:number,start:number){
+function averagePower(result:Result,vehicleId:number,start:number){
  let total=0,count=0;for(let t=start;t<Math.min(start+15,1440);t++){total+=result.frames[t].cars[vehicleId]?.power??0;count++;}return count?total/count:0;
 }
 function seasonalConfig(settings:AnnualSettings,day:number):Config{
