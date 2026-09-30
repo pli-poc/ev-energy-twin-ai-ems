@@ -40,8 +40,8 @@ const capabilities = [
   },
   {
     icon: BrainCircuit,
-    title: 'Synthetic ML training lab',
-    detail: 'A seeded set of 365 replayable days trains a small policy in the browser and exposes it as a seventh comparison run.',
+    title: 'Synthetic annual backtest and ML training',
+    detail: 'A 365-day browser backtest compares six baselines, then trains on grouped historical weeks and applies the learned policy in the current DES.',
   },
   {
     icon: Workflow,
