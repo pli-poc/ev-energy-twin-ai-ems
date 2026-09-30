@@ -4,6 +4,7 @@ const {defaults}=require('../.test-build/engine');
 const {optimizerDefaults}=require('../.test-build/optimizer');
 const {compareStrategies}=require('../.test-build/comparison');
 const {generateAnnualDataset,splitForDay}=require('../.test-build/annual');
+const {runAnnualBacktest,annualBacktestCsv}=require('../.test-build/backtest');
 const {FEATURE_NAMES,fitNetwork,predictPower,evaluateModel,isNetwork}=require('../.test-build/ml');
 
 test('annual dataset comes from 365 seeded simulator days with whole-week splits',()=>{
@@ -32,4 +33,15 @@ test('learned policy is a seventh replayable run behind the existing safety cont
  assert.deepEqual(comparison.runs.map(r=>r.id),['immediate','balanced','ems','cheap','peak','total','ml']);
  const learned=comparison.runs.at(-1);assert.ok(learned.result.vehicles.length>0);assert.equal(learned.result.config.battery,true);
  for(const f of learned.result.frames){for(const s of f.cars)assert.ok(s.power<=learned.result.vehicles[s.id].maxKw+1e-8);assert.ok(f.grid<=Math.max(f.limit,f.building-f.solar-f.batteryPower)+1e-6);}
+});
+
+test('annual backtest reports all six strategies and creates the selected teacher dataset in browser memory',()=>{
+ const settings={config:defaults,optimizer:optimizerDefaults,teacherPolicy:'ems',seed:18};
+ const {report,samples}=runAnnualBacktest(settings,undefined,1);
+ assert.equal(report.days,1);assert.equal(report.teacherPolicy,'ems');
+ assert.deepEqual(report.results.map(r=>r.id),['immediate','balanced','ems','cheap','peak','total']);
+ assert.ok(report.rows>0);assert.equal(report.rows,samples.length);
+ assert.ok(samples.every(s=>s.day===0&&s.split===splitForDay(0)));
+ for(const row of report.results){assert.ok(Number.isFinite(row.energyCost));assert.ok(row.requestedKwh>=row.deliveredKwh-1e-8);assert.ok(row.peakKw>=0);}
+ assert.ok(annualBacktestCsv(report).includes('net_energy_cost_eur'));
 });
