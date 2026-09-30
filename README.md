@@ -1,12 +1,12 @@
 # EV Energy Twin AI EMS
 
-A standalone AI EMS prototype built on the EV Energy Twin optimizer. The twin remains the deterministic physical simulator; AI-assisted signal assessment, safe scheduling, protocol commands and charger feedback are planned in [the build plan](docs/ai-ems-build-plan.md). The initial domain model is in [ontology/](ontology/). This repository has no ChargeWeave dependency.
+A standalone AI EMS prototype built on the EV Energy Twin optimizer. The twin remains the deterministic physical simulator. A synthetic replay lab now demonstrates versioned event handling, rules-based recommendations, safe dispatch validation, virtual charger responses and feedback reconciliation. The wider AI EMS and any live adapters remain gated by target-site review in [the build plan](docs/ai-ems-build-plan.md). The domain model is in [ontology/](ontology/); this repository has no ChargeWeave dependency.
 
 ## See the EMS demo
 
 Open the [hosted simulation](https://pli-poc.github.io/ev-energy-twin-ai-ems/), choose a scenario and strategy, then use the timeline chart selector to switch between **Site power**, **Delivered energy**, **Selected tariff**, **Compare regions**, and **Environment**. All views follow the same simulation clock. The regional tariff curves and weather drivers are synthetic and labeled as such. Select **EMS control loop** below the chart to inspect how the selected time flows through signal assessment and dispatch to the virtual charger boundary and feedback stages. Try **EMS connection lost** around 10:00 to inspect a withheld remote command and local fallback, or **Restricted connection** around 09:00 to inspect a constrained dispatch.
 
-This is a deterministic, synthetic demonstration trace around the existing simulator. It does not yet run a live AI EMS, connect external weather/grid feeds, or send OCPP messages to a charger. The charger acknowledgement is generated locally for demonstration; it is not a conformance test. The ontology and standards profiles are the design baseline for implementing those adapters and runtime stages.
+Open the [synthetic replay lab](https://pli-poc.github.io/ev-energy-twin-ai-ems/replay/) to replay grid, solar, charger, connection-loss and infeasible-service fixtures. It records normalized events, rule assessments, command intent, virtual acknowledgement, separate meter feedback and reconciliation. It does not connect external feeds or send OCPP messages to equipment; its fixture subset is not a conformance test.
 
 ## Train and compare a learned policy
 

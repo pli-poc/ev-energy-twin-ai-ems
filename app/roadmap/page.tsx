@@ -48,6 +48,11 @@ const capabilities = [
     title: 'Inspectable control trace',
     detail: 'A synthetic trace shows signal assessment, dispatch, virtual acknowledgement, feedback and local fallback.',
   },
+  {
+    icon: ShieldCheck,
+    title: 'Deterministic replay lab',
+    detail: 'A versioned signal flows through assessment, a separate safety check, virtual charger response and meter reconciliation.',
+  },
 ];
 
 const phases = [
@@ -81,58 +86,58 @@ const phases = [
   },
   {
     number: '02',
-    status: 'next',
-    label: 'Next build stage',
+    status: 'prototype',
+    label: 'Synthetic preview',
     title: 'Build deterministic input and event replay',
-    summary: 'Start with synthetic adapters that turn weather, energy, market, site and charging information into a versioned input snapshot.',
+    summary: 'A synthetic reference lab now demonstrates versioned input snapshots, source provenance, event revisions, cancellation, duplicate suppression and stale-data fallback. The target-site contract still needs owner review.',
     items: [
-      'Normalize OpenADR-like events, tariffs, grid limits, PV, building load, storage, sessions and charger telemetry.',
-      'Preserve source, event time, recorded time, validity, units, quality and revisions.',
-      'Handle stale, revised, cancelled, duplicate and out-of-order events with a documented policy.',
+      'Replay synthetic grid, solar, charger, connectivity and service-stress events through the existing physical simulator.',
+      'Preserve source, event time, recorded time, validity, units, quality and revisions; suppress stale or conflicting input.',
+      'Reproduce the same snapshot and outcome from a fixed seed; keep event-window corrections scoped to their validity.',
     ],
-    exit: 'A fixed seed and event stream reproduce the same snapshot and outcome; a correction changes only its valid time window.',
+    exit: 'Reference fixtures and CI tests reproduce identical snapshots and cover revised, cancelled, duplicate, stale and out-of-order events. Site-specific completeness remains under review.',
     icon: Waypoints,
   },
   {
     number: '03',
-    status: 'planned',
-    label: 'Planned',
+    status: 'prototype',
+    label: 'Rules-only preview',
     title: 'Add explainable signal assessment and recommendations',
-    summary: 'Use deterministic rules first, then place a replaceable AI assessor behind the same structured interface.',
+    summary: 'Deterministic rules assess urgency and impact, recommend an existing strategy, and fall back to load balancing when assessment is unavailable or malformed.',
     items: [
-      'Assess event urgency, impact, available flexibility and confidence.',
-      'Recommend one of the existing strategies with evidence and a concise explanation.',
-      'Keep schedule construction in the deterministic planner and hard-limit checks in a separate validator.',
+      'Record event impact, flexibility estimate, confidence, rules version and concise explanation.',
+      'Route the recommendation through the existing physical simulator.',
+      'Check site import, session state and equipment power separately before creating command intents.',
     ],
-    exit: 'Rules-only runs replay identically; unavailable, malformed or low-confidence AI assessments fall back safely and cannot bypass physical limits.',
+    exit: 'Rules-only scenarios replay deterministically; unavailable and malformed assessment modes select the local fallback, and the independent validator withholds unsafe dispatch.',
     icon: BrainCircuit,
   },
   {
     number: '04',
-    status: 'planned',
-    label: 'Planned',
+    status: 'prototype',
+    label: 'Virtual adapter preview',
     title: 'Simulate protocol commands and measured feedback',
-    summary: 'Exercise the asynchronous device boundary virtually before any real charger connection.',
+    summary: 'The lab exercises a protocol-neutral intent and a declared virtual fixture subset without sending wire messages or implying OCPP conformance.',
     items: [
-      'Create protocol-neutral command intents with target, expiry, correlation and lifecycle.',
-      'Implement a deliberately selected OCPP 2.1 Edition 2 fixture subset.',
-      'Simulate accepted, rejected, late, duplicate and missing acknowledgements plus meter, power, status and fault feedback.',
+      'Create command intents with plan, session, EVSE, correlation and expiry fields.',
+      'Simulate accepted, rejected, delayed, duplicate and missing acknowledgements.',
+      'Keep virtual meter power and energy separate from requested and acknowledged values.',
     ],
-    exit: 'Every command traces to a plan and every feedback event traces to an asset/session; accepted power is never mistaken for delivered energy.',
+    exit: 'Every synthetic command and feedback sample is traceable to its plan, asset and session. Profile artifacts and conformance evidence remain future work.',
     icon: PlugZap,
   },
   {
     number: '05',
-    status: 'planned',
-    label: 'Planned',
+    status: 'prototype',
+    label: 'Scenario resilience preview',
     title: 'Close the loop and prove resilience',
-    summary: 'Reconcile plans with observed behavior, then replan when the scenario materially changes.',
+    summary: 'Fixture replays cover local fallback, charger and link recovery, solar shortfall and infeasible service. Each replay is deterministic and inspectable.',
     items: [
-      'Replan on event updates, session changes, forecast error, faults and missed telemetry deadlines.',
-      'Exercise stale inputs, low AI confidence, connection loss, recovery and infeasible demand.',
-      'Compare service readiness, feasibility, limits, cost and delivered energy on identical replayed scenarios.',
+      'Exercise stale inputs, unavailable assessment, missed acknowledgements, equipment faults and connection loss.',
+      'Show recovery and service shortfall from the shared physical engine.',
+      'Compare requested, acknowledged and measured behavior without claiming continuous replanning.',
     ],
-    exit: 'Scenario evidence shows normal operation, event response, recovery and fallback without hiding shortfall or violating hard constraints.',
+    exit: 'Synthetic CI scenarios show event response, recovery and fallback while retaining limit and service evidence. Automatic multi-step replanning still needs a later implementation.',
     icon: Activity,
   },
   {
@@ -156,6 +161,7 @@ const statusCopy: Record<string, string> = {
   review: 'roadmap-status roadmap-status--review',
   next: 'roadmap-status roadmap-status--next',
   planned: 'roadmap-status roadmap-status--planned',
+  prototype: 'roadmap-status roadmap-status--prototype',
   later: 'roadmap-status roadmap-status--later',
 };
 
@@ -171,6 +177,7 @@ export default function RoadmapPage() {
         </Link>
         <nav className="roadmap-header-links" aria-label="Simulator pages">
           <Link href="/training/">ML training lab</Link>
+          <Link href="/replay/">Replay lab</Link>
           <Link className="roadmap-open-simulator" href="/"><ArrowLeft size={15} /> Back to simulator</Link>
         </nav>
       </header>
@@ -182,7 +189,8 @@ export default function RoadmapPage() {
             <h1>From a replayable twin<br /><em>to a closed-loop EMS.</em></h1>
             <p>Build the system in evidence-led steps: normalize trusted inputs, produce safe recommendations, exercise protocol behavior, then reconcile commands with measured feedback.</p>
             <div className="roadmap-hero-actions">
-              <Link className="roadmap-button roadmap-button--primary" href="/"><Activity size={17} /> Explore the simulator</Link>
+              <Link className="roadmap-button roadmap-button--primary" href="/replay/"><Workflow size={17} /> Run synthetic replay</Link>
+              <Link className="roadmap-text-link" href="/"><Activity size={17} /> Explore the simulator</Link>
               <a className="roadmap-text-link" href="#delivery-roadmap">View the delivery stages <ArrowRight size={16} /></a>
             </div>
           </div>
@@ -190,10 +198,10 @@ export default function RoadmapPage() {
           <aside className="roadmap-current-card" aria-label="Current development status">
             <div className="roadmap-current-top"><span className="roadmap-pulse" /> CURRENT GATE <span>01 / 06</span></div>
             <h2>Domain scope review</h2>
-            <p>The ontology and conformance baseline are in place. Confirm the target site and equipment scope before building new EMS runtime behavior.</p>
-            <div className="roadmap-next-line"><span>Next build stage</span><b>Deterministic event replay</b></div>
-            <div className="roadmap-progress" role="img" aria-label="Two foundation stages are represented; the first has been delivered and the second is at a review gate">
-              <i className="is-done" /><i className="is-review" /><i /><i /><i /><i /><i />
+            <p>The target-site scope review is still open. A synthetic event-to-feedback reference is ready to inspect, but it does not close the site-specific gate.</p>
+            <div className="roadmap-next-line"><span>Review the synthetic implementation</span><b>Run the deterministic replay lab</b></div>
+            <div className="roadmap-progress" role="img" aria-label="The simulator foundation is delivered, site scope remains under review, and synthetic previews cover phases two through five">
+              <i className="is-done" /><i className="is-review" /><i className="is-prototype" /><i className="is-prototype" /><i className="is-prototype" /><i className="is-prototype" /><i />
             </div>
             <small>Stages describe capability gates, not calendar promises.</small>
           </aside>
@@ -203,7 +211,7 @@ export default function RoadmapPage() {
           <ShieldCheck size={21} />
           <div>
             <strong>What the demo does and does not represent</strong>
-            <p>The simulator, control-loop trace and ML lab use synthetic or replayed data. They are not connected to live weather or grid feeds, OpenADR, real meters, chargers/OCPP or a production controller.</p>
+            <p>The simulator, control-loop trace, replay lab and ML lab use synthetic or replayed data. They are not connected to live weather or grid feeds, OpenADR, real meters, chargers/OCPP or a production controller.</p>
           </div>
         </section>
 
@@ -230,7 +238,7 @@ export default function RoadmapPage() {
             <div className="roadmap-key" aria-label="Roadmap status key">
               <span><i className="key-done" />Delivered</span>
               <span><i className="key-review" />Review gate</span>
-              <span><i className="key-next" />Next</span>
+              <span><i className="key-prototype" />Synthetic preview</span>
               <span><i className="key-planned" />Planned</span>
             </div>
           </div>
@@ -240,7 +248,7 @@ export default function RoadmapPage() {
               <article className={'roadmap-phase roadmap-phase--' + status} data-status={status} key={number}>
                 <div className="roadmap-phase-marker"><Icon size={18} /><span>{number}</span></div>
                 <div className="roadmap-phase-card">
-                  <div className="roadmap-phase-meta"><span className={statusCopy[status]}>{label}</span>{status === 'next' && <span className="roadmap-next-badge">AFTER THE SCOPE GATE</span>}</div>
+                  <div className="roadmap-phase-meta"><span className={statusCopy[status]}>{label}</span>{status === 'prototype' && <span className="roadmap-next-badge">SYNTHETIC REFERENCE · SCOPE GATE OPEN</span>}</div>
                   <h3>{title}</h3>
                   <p className="roadmap-phase-summary">{summary}</p>
                   <div className="roadmap-phase-build">

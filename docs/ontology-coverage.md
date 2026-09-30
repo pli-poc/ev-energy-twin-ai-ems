@@ -1,6 +1,8 @@
 # AI EMS ontology coverage register
 
-This register is the Phase 1 completion checklist. It describes the domain surface that must be modeled and tested before EMS runtime, adapters, or UI work starts. A row passes only when the named terms, SHACL rules, positive and negative fixtures, and an acceptance scenario are present. Provider-specific wire fields belong in a versioned adapter profile or preserved source evidence, not in the canonical vocabulary by default.
+This register is the Phase 1 completion checklist. It describes the domain surface that must be modeled and tested before site-specific EMS runtime or live adapters start. A row passes only when the named terms, SHACL rules, positive and negative fixtures, and an acceptance scenario are present. Provider-specific wire fields belong in a versioned adapter profile or preserved source evidence, not in the canonical vocabulary by default.
+
+**Current evidence:** the synthetic reference lab in [`docs/synthetic-replay-lab.md`](synthetic-replay-lab.md) exercises a selected event-to-feedback path for contract review. It does not satisfy site-owner sign-off, provider-specific profile review or the full coverage criteria in this register.
 
 | Domain slice | Canonical concepts and fields | Required semantic/conformance checks |
 | --- | --- | --- |
