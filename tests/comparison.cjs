@@ -38,6 +38,15 @@ test('quarter-hour peak is an average, not a one-minute maximum; monthly estimat
 test('all four market profiles apply identically to classic and advanced runs',()=>{
  for(const market of ['nl','flanders','wallonia','brussels']){const c=compareStrategies(base,{...optimizerDefaults,market});for(const r of c.runs)for(const t of [0,419,420,659,660,1019,1020,1319,1320,1439])near(r.result.frames[t].price,retail(market,t),'shared tariff');}
 });
+test('weather drivers vary over the day and the cloud scenario changes irradiance and PV output',()=>{
+ const standard=simulate({...defaults,preset:'office'}),cold=simulate({...defaults,preset:'cold'}),cloud=simulate({...defaults,preset:'cloud'});
+ assert.notEqual(standard.frames[360].outdoor,standard.frames[780].outdoor);
+ assert.equal(standard.frames[360].irradiance,0);assert.ok(standard.frames[780].irradiance>900);
+ assert.ok(cold.frames[780].outdoor<standard.frames[780].outdoor);
+ near(cloud.frames[780].irradiance,standard.frames[780].irradiance*.2,'cloud irradiance');
+ near(cloud.frames[780].solar,defaults.solar*.2*.88,'cloud PV output');assert.ok(cloud.frames[780].solar<standard.frames[780].solar);
+ near(cloud.frames[900].irradiance,standard.frames[900].irradiance,'cloud scenario end');
+});
 test('battery, faults, queues, offline control and restricted import limits are shared',()=>{
  for(const preset of ['office','cloud','cold','fleet','capacity','fault','offline','sleep','impossible']){
   const config={...defaults,preset,chargers:preset==='office'?4:20,battery:true};const c=compareStrategies(config,optimizerDefaults);

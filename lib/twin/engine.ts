@@ -16,7 +16,7 @@ export const presets = [
 export type Vehicle = {id:number;name:string;kind:'Employee'|'Visitor'|'Fleet';arrival:number;departure:number;need:number;initial:number;capacity:number;maxKw:number;color:string};
 export type CarState = {id:number;bay:number;parkedAt:number;delivered:number;power:number;status:string;reason:string};
 export type Event = {time:number;text:string;type:'info'|'warning'|'success';owner:string};
-export type Frame = {time:number;building:number;base:number;hvac:number;task:number;solar:number;curtailed:number;grid:number;limit:number;ev:number;batteryPower:number;batteryKwh:number;temp:number;price:number;cars:CarState[];ready:number;departed:number;shortfall:number;cost:number;importKwh:number;exportKwh:number;delivered:number;peak:number;violations:number;excess:number;queue:number;comfort:number;taskEnergy:number};
+export type Frame = {time:number;building:number;base:number;hvac:number;task:number;outdoor:number;irradiance:number;solar:number;curtailed:number;grid:number;limit:number;ev:number;batteryPower:number;batteryKwh:number;temp:number;price:number;cars:CarState[];ready:number;departed:number;shortfall:number;cost:number;importKwh:number;exportKwh:number;delivered:number;peak:number;violations:number;excess:number;queue:number;comfort:number;taskEnergy:number};
 export type Result = {config:Config;vehicles:Vehicle[];frames:Frame[];events:Event[];final:Frame};
 export const clock=(m:number)=>`${String(Math.floor(m/60)%24).padStart(2,'0')}:${String(Math.floor(m%60)).padStart(2,'0')}`;
 export const tariff=(t:number)=>t<420?.16:t<600?.32:t<960?.19:t<1200?.36:.18;
@@ -54,8 +54,9 @@ export function simulate(input:Config,options:SimulationOptions={}):Result{
   const waiting=cars.filter(s=>s.status==='Queued').sort((a,b)=>vehicles[a.id].arrival-vehicles[b.id].arrival||a.id-b.id);
   for(const s of waiting){let b=0;while(used.has(b)&&b<c.chargers)b++;if(b>=c.chargers)break;s.bay=b;s.parkedAt=t;used.add(b);s.status='Arriving';s.reason='Driving to assigned charger';}
   const daylight=Math.max(0,Math.sin((t-360)/840*Math.PI));
-  let solar=Math.min(c.solar*.875,c.solar*daylight*.88);if(t<360||t>1200)solar=0;
-  if(c.preset==='cloud'&&t>=720&&t<900)solar*=.2;
+  const cloudFactor=c.preset==='cloud'&&t>=720&&t<900?.2:1;
+  const irradiance=1000*daylight*cloudFactor;
+  let solar=Math.min(c.solar*.875,c.solar*(irradiance/1000)*.88);
   const occupied=t>=450&&t<1110;
   const base=(occupied?23+5*Math.sin((t-450)/660*Math.PI):13)*c.demand;
   const cold=c.preset==='cold';const outdoor=(cold?2:13)+5*daylight;
@@ -112,7 +113,7 @@ export function simulate(input:Config,options:SimulationOptions={}):Result{
   if(t===720&&c.preset==='cloud')emit(t,'Solar below forecast · charging allocations revised','warning','Facility manager');
   if(t===540&&c.preset==='capacity')emit(t,'Site import allowance reduced to 50 kW','warning','Facility manager');
   for(const s of eligible){const v=vehicles[s.id];if(t===v.departure-30&&s.delivered<v.need-.1)emit(t,`${v.name} leaves in 30 min · ${(v.need-s.delivered).toFixed(1)} kWh still needed`, 'warning');}
-  frames.push({time:t,building,base,hvac,task,solar,curtailed,grid,limit,ev,batteryPower:bp,batteryKwh:battery,temp,price:price(t),cars:cars.map(s=>({...s})),ready,departed,shortfall,cost,importKwh,exportKwh,delivered,peak,violations,excess,queue:cars.filter(s=>s.status==='Queued').length,comfort,taskEnergy});
+  frames.push({time:t,building,base,hvac,task,outdoor,irradiance,solar,curtailed,grid,limit,ev,batteryPower:bp,batteryKwh:battery,temp,price:price(t),cars:cars.map(s=>({...s})),ready,departed,shortfall,cost,importKwh,exportKwh,delivered,peak,violations,excess,queue:cars.filter(s=>s.status==='Queued').length,comfort,taskEnergy});
  }
  return{config:c,vehicles,frames,events,final:frames[1439]};
 }
