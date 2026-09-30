@@ -1,6 +1,6 @@
 export type Policy = 'ems' | 'balanced' | 'immediate';
-export type Config = { preset: string; policy: Policy; grid: number; solar: number; demand: number; battery: boolean; seed: number; chargers: number; flexible: boolean };
-export const defaults: Config = {preset:'office',policy:'ems',grid:100,solar:80,demand:1,battery:false,seed:42,chargers:20,flexible:false};
+export type Config = { preset: string; policy: Policy; grid: number; solar: number; demand: number; battery: boolean; seed: number; chargers: number; flexible: boolean; dayOfYear?:number };
+export const defaults: Config = {preset:'office',policy:'ems',grid:100,solar:80,demand:1,battery:false,seed:42,chargers:20,flexible:false,dayOfYear:111};
 export const presets = [
  {id:'office',name:'A working day',description:'Employees, visitors and fleet vans share a busy workplace.'},
  {id:'cloud',name:'Clouds over the campus',description:'Solar falls unexpectedly between 12:00 and 15:00.'},
@@ -29,11 +29,11 @@ export function vehiclesFor(c:Config):Vehicle[]{const random=rng(c.seed);const c
  if(c.preset==='impossible')list.forEach(v=>{v.need=35;v.departure=v.arrival+75;});
  return list;
 }
-export function validateConfig(raw:unknown):Config {const c=raw as Config;if(!c||!presets.some(p=>p.id===c.preset)||!['ems','balanced','immediate'].includes(c.policy)||!Number.isFinite(c.grid)||c.grid<20||c.grid>250||!Number.isFinite(c.solar)||c.solar<0||c.solar>160||!Number.isFinite(c.demand)||c.demand<.5||c.demand>2||!Number.isInteger(c.seed)||c.seed<0||c.seed>100000||!Number.isInteger(c.chargers)||c.chargers<4||c.chargers>20||typeof c.battery!=='boolean'||typeof c.flexible!=='boolean')throw new Error('Invalid scenario. Check capacity, solar, demand, seed and charger values.');return {...c};}
+export function validateConfig(raw:unknown):Config {const c=raw as Config;if(!c||!presets.some(p=>p.id===c.preset)||!['ems','balanced','immediate'].includes(c.policy)||!Number.isFinite(c.grid)||c.grid<20||c.grid>250||!Number.isFinite(c.solar)||c.solar<0||c.solar>160||!Number.isFinite(c.demand)||c.demand<.5||c.demand>2||!Number.isInteger(c.seed)||c.seed<0||c.seed>100000||!Number.isInteger(c.chargers)||c.chargers<4||c.chargers>20||typeof c.battery!=='boolean'||typeof c.flexible!=='boolean'||(c.dayOfYear!==undefined&&(!Number.isInteger(c.dayOfYear)||c.dayOfYear<0||c.dayOfYear>364)))throw new Error('Invalid scenario. Check capacity, solar, demand, seed, date and charger values.');return {...c};}
 // All strategies execute through the same vehicle, site, storage and fault model.
 export type DispatchContext = {
  time:number; vehicles:Vehicle[]; available:CarState[]; budget:number;
- building:number; solar:number; batteryPower:number; limit:number;
+ building:number; solar:number; batteryPower:number; batteryKwh:number; limit:number; price:number; outdoor:number; irradiance:number; config:Config;
 };
 export type DispatchDecision = {power:number;reason:string};
 export type SimulationOptions = {
@@ -53,13 +53,18 @@ export function simulate(input:Config,options:SimulationOptions={}):Result{
   const used=new Set(cars.filter(s=>s.status!=='Expected'&&s.status!=='Departed'&&s.bay>=0).map(s=>s.bay));
   const waiting=cars.filter(s=>s.status==='Queued').sort((a,b)=>vehicles[a.id].arrival-vehicles[b.id].arrival||a.id-b.id);
   for(const s of waiting){let b=0;while(used.has(b)&&b<c.chargers)b++;if(b>=c.chargers)break;s.bay=b;s.parkedAt=t;used.add(b);s.status='Arriving';s.reason='Driving to assigned charger';}
-  const daylight=Math.max(0,Math.sin((t-360)/840*Math.PI));
+  const seasonal=c.dayOfYear===undefined?null:c.dayOfYear;
+  const daylightHours=seasonal===null?14:Math.round((12+4*Math.cos(2*Math.PI*(seasonal-172)/365))*10)/10;
+  const sunrise=780-daylightHours*30;
+  const daylight=Math.max(0,Math.sin((t-sunrise)/(daylightHours*60)*Math.PI));
   const cloudFactor=c.preset==='cloud'&&t>=720&&t<900?.2:1;
   const irradiance=1000*daylight*cloudFactor;
   let solar=Math.min(c.solar*.875,c.solar*(irradiance/1000)*.88);
   const occupied=t>=450&&t<1110;
   const base=(occupied?23+5*Math.sin((t-450)/660*Math.PI):13)*c.demand;
-  const cold=c.preset==='cold';const outdoor=(cold?2:13)+5*daylight;
+  const cold=c.preset==='cold';
+  const seasonalMean=seasonal===null?(cold?2:13):9+8*Math.cos(2*Math.PI*(seasonal-200)/365)-(cold?6:0);
+  const outdoor=seasonalMean+(seasonal===null?5:4)*daylight;
   const internalHeat=occupied?3:1;
   const targetTemp=occupied?(c.flexible&&price(t)>.3?20:21):18;
   // Single-zone heat balance. Effective envelope loss scales with building demand.
@@ -82,7 +87,7 @@ export function simulate(input:Config,options:SimulationOptions={}):Result{
   const policy=offline?'balanced':c.policy;
   let budget=policy==='immediate'?1e6:Math.max(0,limit-3-building+solar+bp);
   if(c.battery&&available.length&&bp>=0){const wanted=Math.min(available.length*8,80);const extra=Math.min(50-bp,Math.max(0,wanted-budget),(battery-50)*60*.95-bp);if(extra>0){bp+=extra;budget+=extra;}}
-  const custom=options.dispatch&&!offline?options.dispatch({time:t,vehicles,available,budget,building,solar,batteryPower:bp,limit}):undefined;
+  const custom=options.dispatch&&!offline?options.dispatch({time:t,vehicles,available,budget,building,solar,batteryPower:bp,batteryKwh:battery,limit,price:price(t),outdoor,irradiance,config:c}):undefined;
   const cap=(s:CarState)=>Math.min(vehicles[s.id].maxKw,(vehicles[s.id].need-s.delivered)*60/.9);
   if(custom){
    // A planner requests power; the physical controller enforces current headroom.
