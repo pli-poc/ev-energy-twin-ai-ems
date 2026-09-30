@@ -1,7 +1,8 @@
 import {simulate,validateConfig,type Config,type Policy,type Result} from './engine';
 import {advancedPolicies,EXPORT_PRICE,retail,simulateOptimized,validateOptimizer,type AdvancedPolicy,type OptimizerConfig,type OptimizerResult} from './optimizer';
+import {modelDispatch,type Network} from './ml';
 export const COMPARISON_VERSION='comparison-1.0.0';
-export type StrategyId=Policy|AdvancedPolicy;
+export type StrategyId=Policy|AdvancedPolicy|'ml';
 export const strategies:{id:StrategyId;name:string;description:string}[]=[
  {id:'immediate',name:'Immediate charging',description:'Uncontrolled baseline: maximum power on connection. Overloads are recorded, not prevented.'},
  {id:'balanced',name:'Load balancing',description:'Shares current headroom. Uses the same hardware, tariff and fault model as every strategy.'},
@@ -19,7 +20,7 @@ export function measure(result:Result,opt:OptimizerConfig):Metrics{
  const rate=opt.capacityRateEurPerKwMonth??0;
  return {importCost,exportCredit,energyCost:importCost-exportCredit,requestedKwh,deliveredKwh:f.delivered,shortfallKwh:f.shortfall,ready:f.ready,departed:f.departed,readyPct:f.departed?100*f.ready/f.departed:0,minutePeakKw:f.peak,quarterPeakKw,violationMinutes:f.violations,excessKwh:f.excess,batteryEndKwh:f.batteryKwh,incrementalMonthlyPeakCharge:rate>0?Math.max(0,quarterPeakKw-(opt.existingMonthlyPeakKw??opt.peak))*rate:null};
 }
-export function compareStrategies(input:Config,raw:OptimizerConfig):Comparison{
+export function compareStrategies(input:Config,raw:OptimizerConfig,model?:Network|null):Comparison{
  const valid=validateConfig(input),config={...valid,policy:'balanced' as Policy},optimizer=validateOptimizer(raw);
  const price=(t:number)=>retail(optimizer.market,t);
  const reference=simulate(config,{price,exportPrice:EXPORT_PRICE});
@@ -27,6 +28,7 @@ export function compareStrategies(input:Config,raw:OptimizerConfig):Comparison{
   const result=s.id==='balanced'?reference:['cheap','peak','total'].includes(s.id)?simulateOptimized(config,{...optimizer,policy:s.id as AdvancedPolicy},reference):simulate({...config,policy:s.id as Policy},{price,exportPrice:EXPORT_PRICE});
   return {...s,result,metrics:measure(result,optimizer),equivalentService:false,comparisonNote:''};
  });
+ if(model){const result=simulate({...config,policy:'ems'},{price,exportPrice:EXPORT_PRICE,dispatch:modelDispatch(model)});runs.push({id:'ml',name:'Learned EMS policy',description:`Compact model trained to imitate ${model.teacherPolicy} using one year of illustrative synthetic simulation data.`,result,metrics:measure(result,optimizer),equivalentService:false,comparisonNote:'Experimental learned dispatch. The same vehicle, charger, battery and grid limits still apply; inspect service and safety results before interpreting cost.'});}
  const base=runs.find(r=>r.id==='balanced')!;
  for(const run of runs){
   const sameDelivery=run.metrics.ready===base.metrics.ready&&run.result.vehicles.every(v=>Math.abs(run.result.final.cars[v.id].delivered-reference.final.cars[v.id].delivered)<.05);
