@@ -44,6 +44,17 @@ const {spawn}=require('node:child_process');
   await page.locator('.strategy-analysis').screenshot({path:'test-results/comparison-desktop.png'});
   await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'Replay Peak-aware',exact:true}).click();await page.locator('tr[data-strategy="peak"].selected-run').waitFor();
   await page.screenshot({path:'test-results/comparison-mobile.png',fullPage:true});
+  await page.getByRole('tab',{name:'EMS control loop'}).click();
+  await page.getByRole('heading',{name:'EMS control loop · 08:45',exact:true}).waitFor();
+  assert.equal(await page.locator('.ems-trace-row').count(),6);
+  assert.ok((await page.locator('.ems-notice').innerText()).includes('no external feed or OCPP wire adapter is connected'));
+  await page.getByRole('combobox',{name:'Scenario'}).click();
+  await page.getByRole('option',{name:'EMS connection lost',exact:true}).click();
+  await page.getByLabel('Simulation time in minutes').evaluate((el)=>{const input=el;const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;setter.call(input,'610');input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));});
+  await page.getByRole('heading',{name:'EMS control loop · 10:10',exact:true}).waitFor();
+  assert.ok((await page.locator('.ems-trace-row').nth(3).innerText()).includes('No remote command sent'));
+  assert.ok((await page.locator('.ems-trace-row').nth(5).innerText()).includes('fallback recorded'));
+  console.log('PASS: selected simulation time exposes the EMS trace and offline local-fallback path.');
   assert.deepEqual(errors,[],'No uncaught browser errors');
   console.log('PASS: mobile replay and screenshots; no uncaught browser exceptions.');
  }finally{if(browser)await browser.close();server.kill();}
