@@ -77,7 +77,7 @@ export function replaySignalEvents(rawEvents:readonly unknown[],asOf:string,seed
  if(!Number.isInteger(seed)||seed<0||seed>100_000)throw new Error('Replay seed must be an integer from 0 to 100000.');
  const groups=new Map<string,NormalizedSignal[]>(),dispositions:EventDisposition[]=[];let duplicateCount=0;
  for(const [index,raw] of rawEvents.entries()){
-  try{const event=normalizeSignal(raw);const group=groups.get(event.sourceEventId)??[];group.push(event);groups.set(event.sourceEventId,group);}
+  try{const event=normalizeSignal(raw);if(parsed(event.recordedAt)>now+minuteMs){dispositions.push({sourceEventId:event.sourceEventId,revision:event.revision,state:'stale',detail:'Event has a receipt time after this snapshot and has not arrived yet.'});continue;}const group=groups.get(event.sourceEventId)??[];group.push(event);groups.set(event.sourceEventId,group);}
   catch(error){const value=raw&&typeof raw==='object'?raw as Partial<SignalEvent>:undefined;dispositions.push({sourceEventId:value?.sourceEventId??`invalid-${index+1}`,revision:Number.isInteger(value?.revision)?Number(value?.revision):0,state:'invalid',detail:error instanceof Error?error.message:'Invalid event.'});}
  }
  const activeSignals:NormalizedSignal[]=[];
@@ -91,7 +91,7 @@ export function replaySignalEvents(rawEvents:readonly unknown[],asOf:string,seed
   if(now<parsed(winner.validFrom)){dispositions.push({sourceEventId,revision:winner.revision,state:'not-yet-valid',detail:'Event is outside its validity window.'});continue;}
   if(now>=parsed(winner.validUntil)){dispositions.push({sourceEventId,revision:winner.revision,state:'expired',detail:'Event validity window has ended.'});continue;}
   const age=now-parsed(winner.recordedAt);
-  if(winner.quality==='stale'||winner.quality==='missing'||winner.quality==='invalid'||age>30*minuteMs||parsed(winner.recordedAt)>now+minuteMs){dispositions.push({sourceEventId,revision:winner.revision,state:'stale',detail:'Stale, missing, invalid or future-recorded input is not dispatched.'});continue;}
+  if(winner.quality==='stale'||winner.quality==='missing'||winner.quality==='invalid'||age>30*minuteMs){dispositions.push({sourceEventId,revision:winner.revision,state:'stale',detail:'Stale, missing or invalid input is not dispatched.'});continue;}
   activeSignals.push(winner);dispositions.push({sourceEventId,revision:winner.revision,state:'active',detail:winner.quality==='estimated'?'Estimated input is active with reduced confidence.':'Valid input is active.'});
  }
  activeSignals.sort((a,b)=>signalPriority[a.signal]-signalPriority[b.signal]||a.sourceEventId.localeCompare(b.sourceEventId));
@@ -145,7 +145,7 @@ export function exerciseVirtualAdapter(intents:CommandIntent[],mode:AckMode,minu
   const delay=mode==='delayed'?3:0,receivedMinute=minute+delay,expired=receivedMinute>intent.expiresAtMinute;
   if(mode!=='missing'){
    const accepted=mode!=='rejected'&&!expired;
-   const acknowledgement:Acknowledgement={messageId:`ack-${intent.id}`,intentId:intent.id,correlationId:intent.correlationId,evseId:intent.evseId,sessionId:intent.sessionId,status:expired?'expired':accepted?'accepted':'rejected',acceptedPowerKw:accepted?intent.targetPowerKw:expired?null:0,receivedAt:isoAtMinute(Math.min(1439,receivedMinute)),latencyMinutes:delay,reason:expired?'Acknowledgement arrived after command expiry.':accepted?(delay?'Accepted after a simulated delay.':'Command accepted by virtual fixture.'): 'Virtual fixture rejected the requested profile.'};
+   const acknowledgement:Acknowledgement={messageId:`ack-${intent.id}`,intentId:intent.id,correlationId:intent.correlationId,evseId:intent.evseId,sessionId:intent.sessionId,status:expired?'expired':accepted?'accepted':'rejected',acceptedPowerKw:accepted?intent.targetPowerKw:expired?null:0,receivedAt:isoAtMinute(receivedMinute),latencyMinutes:delay,reason:expired?'Acknowledgement arrived after command expiry.':accepted?(delay?'Accepted after a simulated delay.':'Command accepted by virtual fixture.'): 'Virtual fixture rejected the requested profile.'};
    raw.push(acknowledgement);if(mode==='duplicate')raw.push({...acknowledgement});
   }
   const actual=Math.max(0,observedPowers[intent.id]??intent.targetPowerKw),metered=mode==='rejected'?actual*.4:actual*.985;

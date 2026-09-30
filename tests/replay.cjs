@@ -24,6 +24,8 @@ test('stale, future-recorded and malformed events are suppressed with explicit p
  const stale={...makeFixtureSignal('grid-limit'),recordedAt:minuteTime(500)},future={...makeFixtureSignal('solar-shortfall'),recordedAt:minuteTime(900)};
  const snapshot=replaySignalEvents([stale,future,{sourceEventId:'bad'}],minuteTime(555),42);
  assert.equal(snapshot.activeSignals.length,0);assert.ok(snapshot.dispositions.some(x=>x.state==='stale'));assert.ok(snapshot.dispositions.some(x=>x.state==='invalid'));
+ const current=makeFixtureSignal('grid-limit'),lateRevision={...current,revision:2,recordedAt:minuteTime(600)};
+ const outOfOrder=replaySignalEvents([lateRevision,current],minuteTime(555),42);assert.equal(outOfOrder.activeSignals[0].revision,1);
  const replay=runSyntheticReplay({signal:'grid-limit',quality:'stale'});assert.equal(replay.assessment.status,'fallback');assert.equal(replay.assessment.recommendedPolicy,'balanced');assert.equal(replay.snapshot.event.activeSignals.length,0);
 });
 
