@@ -76,6 +76,12 @@ const {spawn}=require('node:child_process');
   assert.equal(await page.locator('tr[data-strategy]').count(),7);
   assert.ok((await page.locator('.scene-sub').innerText()).includes('Learned EMS policy'));
   console.log('PASS: training route labels its synthetic data; imported model loads into the twin as a seventh safety-limited run.');
+  await page.getByRole('link',{name:'Development roadmap',exact:true}).click();
+  await page.getByRole('heading',{name:'From a replayable twin to a closed-loop EMS.',exact:true}).waitFor();
+  assert.equal(await page.locator('.roadmap-phase').count(),7);
+  assert.ok((await page.locator('.roadmap-scope-note').innerText()).includes('not connected to live'));
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth),true,'Roadmap fits the mobile viewport without horizontal overflow');
+  await page.screenshot({path:'test-results/roadmap-mobile.png',fullPage:true});
   assert.deepEqual(errors,[],'No uncaught browser errors');
   console.log('PASS: mobile replay and screenshots; no uncaught browser exceptions.');
  }finally{if(browser)await browser.close();server.kill();}
