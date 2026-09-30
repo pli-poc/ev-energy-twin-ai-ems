@@ -16,3 +16,24 @@
 .training-flow-storage{margin:12px 1px 0;color:#899da9;font-size:11px;line-height:1.55}
 @media(max-width:900px){.training-flow-steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.training-flow{padding:14px}.training-flow-heading{align-items:flex-start;flex-direction:column}.training-flow-steps{grid-template-columns:1fr}.training-flow-steps article{min-height:0}}
+
+.annual-report-panel{margin-top:16px;overflow:hidden}
+.annual-report-panel>.panel-head{align-items:center}
+.annual-report-panel>.panel-head .btn{white-space:nowrap}
+.annual-report-note{display:flex;gap:8px;align-items:flex-start;margin:0 18px 12px;padding:10px 12px;border:1px solid #5a4e2d;border-radius:6px;background:#211f18;color:#d7c995;font-size:11px;line-height:1.5}
+.annual-report-note svg{flex:none;color:#e8cd78}
+.annual-table-wrap{overflow-x:auto}
+.annual-table{width:100%;border-collapse:collapse;min-width:780px}
+.annual-table th{padding:10px 12px;text-align:right;color:#8197a5;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #2c3d47}
+.annual-table th:first-child,.annual-table td:first-child{text-align:left}
+.annual-table td{padding:12px;text-align:right;color:#b9c9d1;font-size:11px;border-bottom:1px solid #202f38;font-variant-numeric:tabular-nums}
+.annual-table td:first-child{color:#e0ebef}
+.annual-table td:first-child small{display:block;margin-top:3px;color:#8fbba9;font-size:9px}
+.annual-table tr:last-child td{border-bottom:0}
+.annual-table .annual-reference{background:#13231f}
+.annual-table .annual-reference td:first-child b{color:#91e0c0}
+.annual-split-summary{display:flex;flex-wrap:wrap;gap:8px 18px;padding:12px 18px;border-top:1px solid #293b46;color:#8fa2ae;font-size:10px}
+.annual-split-summary b{color:#dce9ee;font-weight:600;margin-left:5px}
+.annual-report-panel>.split-explainer{padding-top:0}
+.training-actions .btn:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:700px){.annual-report-panel>.panel-head{align-items:flex-start;flex-direction:column}.annual-report-panel>.panel-head .btn{width:100%}.annual-table th,.annual-table td{padding:9px}}
