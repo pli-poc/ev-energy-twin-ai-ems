@@ -13,3 +13,8 @@ This is a deterministic, synthetic demonstration trace around the existing simul
 Open the [ML training lab](https://pli-poc.github.io/ev-energy-twin-ai-ems/training/) to generate a seeded, full-year synthetic dataset from the same Energy Twin simulator. It carries the selected scenario's charging and battery settings into the lab, varies seasonal demand and weather, and includes arrival and departure schedules, tariff profiles, user preferences, charger constraints, and battery state. Training and evaluation use week-grouped splits to reduce leakage between nearby days.
 
 The lab fits a compact neural policy in a browser worker, reports held-out test metrics, and lets you save the model locally or export/import its JSON package. Returning to the twin makes the learned policy available as a seventh strategy alongside the six baselines; it remains subject to the simulator's physical safety limits. All generated data and results are illustrative and synthetic. A trained package stays in that browser's local storage unless exported, and this prototype does not train on operational charging data or deploy a live controller.
+
+
+## Simulator development roadmap
+
+Open the [interactive development roadmap](https://pli-poc.github.io/ev-energy-twin-ai-ems/roadmap/) for the current simulator capabilities, the ontology scope review gate, and the evidence-based sequence from deterministic synthetic event replay through safe recommendations, virtual charger feedback, resilience testing and later portability. The roadmap distinguishes today’s synthetic demonstrations from future EMS runtime and real-device work.
